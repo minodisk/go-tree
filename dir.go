@@ -47,7 +47,7 @@ func (d *Dir) Type() string {
 	return "directory"
 }
 
-func (d *Dir) setParent(p *Dir) {
+func (d *Dir) SetParent(p *Dir) {
 	d.parent = p
 }
 
@@ -75,12 +75,12 @@ func (d *Dir) ToggleSelected() {
 	d.selected = !d.selected
 }
 
-func (d *Dir) Rename(name string) error {
-	return d.Move(filepath.Join(d.dirname, name))
+func (d *Dir) Rename(newName string) error {
+	return os.Rename(d.Path(), filepath.Join(d.dirname, newName))
 }
 
-func (d *Dir) Move(newpath string) error {
-	return os.Rename(d.Path(), newpath)
+func (d *Dir) Move(newDirname string) error {
+	return os.Rename(d.Path(), filepath.Join(newDirname, d.Name()))
 }
 
 func (d *Dir) Remove() error {
@@ -89,7 +89,20 @@ func (d *Dir) Remove() error {
 
 // Non interface methods
 
+func (d *Dir) Equals(t *Dir) bool {
+	if t == nil {
+		return false
+	}
+	return d.Path() == t.Path()
+}
+
 func (d *Dir) Scan() error {
+	if !d.opened {
+		return nil
+	}
+
+	olds := d.children
+
 	d.children = Operators{}
 	dirname := d.Path()
 	infos, err := ioutil.ReadDir(dirname)
@@ -99,9 +112,22 @@ func (d *Dir) Scan() error {
 	for _, info := range infos {
 		var o Operator
 		if info.IsDir() {
-			o = &Dir{FileInfo: info, config: d.config, dirname: dirname}
+			newDir := &Dir{FileInfo: info, config: d.config, dirname: dirname}
+			oldDir := olds.FindDir(newDir)
+			if oldDir != nil {
+				oldDir.Scan()
+				o = oldDir
+			} else {
+				o = newDir
+			}
 		} else {
-			o = &File{FileInfo: info, config: d.config, dirname: dirname}
+			newFile := &File{FileInfo: info, config: d.config, dirname: dirname}
+			oldFile := olds.FindFile(newFile)
+			if oldFile != nil {
+				o = oldFile
+			} else {
+				o = newFile
+			}
 		}
 		d.AppendChild(o)
 	}
@@ -161,7 +187,7 @@ func (d *Dir) NumChildren() int {
 
 func (d *Dir) AppendChild(o Operator) {
 	d.children = append(d.children, o)
-	o.setParent(d)
+	o.SetParent(d)
 }
 
 func (d *Dir) IndexOf(i int) (Operator, bool) {
@@ -272,39 +298,13 @@ func (d *Dir) line(depth int) []byte {
 	return []byte(fmt.Sprintf("%s%s %s/", strings.Repeat(d.config.Indent, depth), prefix, d.Name()))
 }
 
-func (d *Dir) RelFrom(o Operator) (string, error) {
-	return filepath.Rel(o.Path(), d.Path())
-}
-
-func (d *Dir) UnderOrEquals(o Operator) (bool, error) {
-	rel, err := d.RelFrom(o)
-	if err != nil {
-		return false, err
-	}
-	if rel == "." {
-		return true, nil
-	}
-	if len(rel) < 2 {
-		return false, nil
-	}
-	return rel[0:1] != "..", nil
-}
-
-func (d *Dir) Equals(o Operator) (bool, error) {
-	rel, err := d.RelFrom(o)
-	if err != nil {
-		return false, err
-	}
-	return rel == ".", nil
-}
-
 func (d *Dir) CreateDir(name ...string) error {
 	for _, n := range name {
 		if err := os.MkdirAll(filepath.Join(d.Path(), n), 775); err != nil {
 			return err
 		}
 	}
-	return nil
+	return d.Scan()
 }
 
 func (d *Dir) CreateFile(name ...string) error {
@@ -313,5 +313,5 @@ func (d *Dir) CreateFile(name ...string) error {
 			return err
 		}
 	}
-	return nil
+	return d.Scan()
 }

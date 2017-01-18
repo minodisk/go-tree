@@ -18,6 +18,13 @@ func linesToString(lines [][]byte) string {
 
 func TestNewDir(t *testing.T) {
 	{
+		_, err := tree.NewDir("/home/minodisk/Workspace/go/src/github.com/minodisk/nvim-finder", tree.ConfigDefault)
+		if err != nil {
+			t.Errorf("success with nvim-finder directory")
+		}
+	}
+
+	{
 		_, err := tree.NewDir("./fixtures/wrong/path", tree.ConfigDefault)
 		if err == nil {
 			t.Errorf("should return error with a wrong path")
