@@ -113,11 +113,11 @@ func (t *Tree) UpAt(cursor int) error {
 
 	// When target directory is lower than or equal to root,
 	// just close current directory.
-	isLower, err := next.UnderOrEquals(t.root)
+	isUnder, err := UnderOrEquals(t.root, next)
 	if err != nil {
 		return err
 	}
-	if isLower {
+	if isUnder {
 		current.Close()
 		return nil
 	}
@@ -138,7 +138,8 @@ func (t *Tree) DownAt(cursor int) error {
 
 	switch o := o.(type) {
 	case *Dir:
-		return o.Open()
+		t.root = o
+		return t.root.Open()
 	case *File:
 		return t.OnOpenFile(o.Path())
 	default:
@@ -222,17 +223,25 @@ func (t *Tree) CreateFileAt(cursor int, names ...string) error {
 // 	return o.Rename(name)
 // }
 
-func (t *Tree) ToggleSelectedAt(cursor int) error {
+func (t *Tree) ToggleSelectedAt(cursor int) (bool, error) {
 	o, ok := t.root.IndexOf(cursor)
 	if !ok {
 		//
 	}
 	o.ToggleSelected()
-	return nil
+	return o.Selected(), nil
 }
 
 func (t *Tree) HasSelected() bool {
 	return t.root.HasSelected()
+}
+
+func (t *Tree) RenameSelected() error {
+	os := t.root.Selecteds()
+	for _, o := range os {
+		o.Unselect()
+	}
+	return errors.New("rename of multiple files has not been implemented yet")
 }
 
 func (t *Tree) MoveSelected(path string) error {
