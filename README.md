@@ -1,4 +1,4 @@
-# go-tree [![GoDoc](https://godoc.org/github.com/minodisk/go-tree?status.png)](https://godoc.org/github.com/minodisk/go-tree)
+# tree [![GoDoc](https://godoc.org/github.com/minodisk/go-tree?status.png)](https://godoc.org/github.com/minodisk/go-tree)
 
 Output directory tree structure, and manipulate the objects in it.
 
