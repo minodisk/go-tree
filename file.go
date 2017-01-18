@@ -36,7 +36,7 @@ func (f *File) Type() string {
 	return "file"
 }
 
-func (f *File) setParent(p *Dir) {
+func (f *File) SetParent(p *Dir) {
 	f.parent = p
 }
 
@@ -64,12 +64,12 @@ func (f *File) ToggleSelected() {
 	f.selected = !f.selected
 }
 
-func (f *File) Rename(name string) error {
-	return f.Move(filepath.Join(f.dirname, name))
+func (f *File) Rename(newName string) error {
+	return os.Rename(f.Path(), filepath.Join(f.dirname, newName))
 }
 
-func (f *File) Move(newpath string) error {
-	return os.Rename(f.Path(), newpath)
+func (f *File) Move(newDirname string) error {
+	return os.Rename(f.Path(), filepath.Join(newDirname, f.Name()))
 }
 
 func (f *File) Remove() error {
@@ -77,6 +77,13 @@ func (f *File) Remove() error {
 }
 
 // Non interface methods
+
+func (f *File) Equals(t *File) bool {
+	if t == nil {
+		return false
+	}
+	return f.Path() == t.Path()
+}
 
 func (f *File) line(depth int) []byte {
 	var prefix string
