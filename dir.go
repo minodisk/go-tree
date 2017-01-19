@@ -300,7 +300,7 @@ func (d *Dir) line(depth int) []byte {
 
 func (d *Dir) CreateDir(name ...string) error {
 	for _, n := range name {
-		if err := os.MkdirAll(filepath.Join(d.Path(), n), 775); err != nil {
+		if err := os.MkdirAll(filepath.Join(d.Path(), n), 0775); err != nil {
 			return err
 		}
 	}
@@ -309,7 +309,7 @@ func (d *Dir) CreateDir(name ...string) error {
 
 func (d *Dir) CreateFile(name ...string) error {
 	for _, n := range name {
-		if _, err := os.OpenFile(filepath.Join(d.Path(), n), os.O_CREATE, 664); err != nil {
+		if _, err := os.OpenFile(filepath.Join(d.Path(), n), os.O_CREATE, 0664); err != nil {
 			return err
 		}
 	}
