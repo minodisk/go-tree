@@ -1,6 +1,12 @@
 package tree
 
-import "path/filepath"
+import (
+	"errors"
+	"os"
+	"path/filepath"
+
+	"github.com/skratchdot/open-golang/open"
+)
 
 type Operator interface {
 	SetParent(*Dir)
@@ -8,6 +14,7 @@ type Operator interface {
 	IsDir() bool
 	Type() string
 	Name() string
+	Dirname() string
 	Path() string
 
 	Selected() bool
@@ -15,7 +22,6 @@ type Operator interface {
 	Unselect()
 	ToggleSelected()
 
-	Rename(string) error
 	Move(string) error
 	Remove() error
 }
@@ -47,6 +53,79 @@ func UnderOrEquals(base, target Operator) (bool, error) {
 	}
 }
 
+func GetDir(o Operator) *Dir {
+	switch t := o.(type) {
+	case *Dir:
+		return t
+	default:
+		return t.Parent()
+	}
+}
+
+func GetDirWithOpened(o Operator) (*Dir, error) {
+	switch o := o.(type) {
+	case *Dir:
+		if o.opened {
+			return o, nil
+		}
+		return o.ReadParent()
+	default:
+		return o.Parent(), nil
+	}
+}
+
+func Toggle(o Operator) error {
+	switch o := o.(type) {
+	case *Dir:
+		return o.Toggle()
+	case *File:
+		return o.Parent().Toggle()
+	default:
+		return errors.New("invalid operator")
+	}
+}
+
+func ToggleRec(o Operator) error {
+	switch o := o.(type) {
+	case *Dir:
+		return o.ToggleRec()
+	case *File:
+		return o.Parent().ToggleRec()
+	default:
+		return errors.New("invalid operator")
+	}
+}
+
+func CreateDir(o Operator, names ...string) error {
+	switch o := o.(type) {
+	case *Dir:
+		return o.CreateDir(names...)
+	case *File:
+		return o.Parent().CreateDir(names...)
+	default:
+		return errors.New("invalid operator")
+	}
+}
+
+func CreateFile(o Operator, names ...string) error {
+	switch o := o.(type) {
+	case *Dir:
+		return o.CreateFile(names...)
+	case *File:
+		return o.Parent().CreateFile(names...)
+	default:
+		return errors.New("invalid operator")
+	}
+}
+
+func Rename(o Operator, newName string) error {
+	return os.Rename(o.Path(), filepath.Join(o.Dirname(), newName))
+}
+
+func OpenWithOS(o Operator) error {
+	return open.Run(o.Path())
+}
+
 type Operators []Operator
 
 func (os Operators) Len() int {
@@ -67,6 +146,18 @@ func (os Operators) Less(i, j int) bool {
 		return false
 	}
 	return a.Name() < b.Name()
+}
+
+func (os Operators) Select() {
+	for _, o := range os {
+		o.Select()
+	}
+}
+
+func (os Operators) Unselect() {
+	for _, o := range os {
+		o.Unselect()
+	}
 }
 
 func (os Operators) FindDir(d *Dir) *Dir {
