@@ -44,6 +44,10 @@ func (f *File) Parent() *Dir {
 	return f.parent
 }
 
+func (f *File) Dirname() string {
+	return f.dirname
+}
+
 func (f *File) Path() string {
 	return filepath.Join(f.dirname, f.Name())
 }
@@ -62,10 +66,6 @@ func (f *File) Unselect() {
 
 func (f *File) ToggleSelected() {
 	f.selected = !f.selected
-}
-
-func (f *File) Rename(newName string) error {
-	return os.Rename(f.Path(), filepath.Join(f.dirname, newName))
 }
 
 func (f *File) Move(newDirname string) error {
