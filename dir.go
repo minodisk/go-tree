@@ -55,6 +55,10 @@ func (d *Dir) Parent() *Dir {
 	return d.parent
 }
 
+func (d *Dir) Dirname() string {
+	return d.dirname
+}
+
 func (d *Dir) Path() string {
 	return filepath.Join(d.dirname, d.Name())
 }
@@ -73,10 +77,6 @@ func (d *Dir) Unselect() {
 
 func (d *Dir) ToggleSelected() {
 	d.selected = !d.selected
-}
-
-func (d *Dir) Rename(newName string) error {
-	return os.Rename(d.Path(), filepath.Join(d.dirname, newName))
 }
 
 func (d *Dir) Move(newDirname string) error {
@@ -249,6 +249,20 @@ func (d *Dir) HasSelected() bool {
 		}
 	}
 	return false
+}
+
+func (d *Dir) All() Operators {
+	os := Operators{}
+	os = append(os, d)
+	for _, o := range d.children {
+		switch o := o.(type) {
+		case *Dir:
+			os = append(os, o.All()...)
+		case *File:
+			os = append(os, o)
+		}
+	}
+	return os
 }
 
 func (d *Dir) Selecteds() Operators {
