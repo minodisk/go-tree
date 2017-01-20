@@ -10,12 +10,6 @@ import (
 	"strings"
 )
 
-const (
-	OpenedPrefix   = "+"
-	ClosedPrefix   = "-"
-	SelectedPrefix = "|"
-)
-
 type Dir struct {
 	os.FileInfo
 	config  Config
