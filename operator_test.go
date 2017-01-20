@@ -1,9 +1,14 @@
 package tree_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	tree "github.com/minodisk/go-tree"
+)
+
+var (
+	ConfigShorter = tree.Config{Indent: " "}.FillWithDefault()
 )
 
 type O struct {
@@ -15,8 +20,9 @@ func (o *O) SetParent(d *tree.Dir) {}
 func (o *O) Parent() *tree.Dir     { return &tree.Dir{} }
 func (o *O) IsDir() bool           { return false }
 func (o *O) Type() string          { return "" }
-func (o *O) Name() string          { return "" }
 func (o *O) Path() string          { return o.path }
+func (o *O) Dirname() string       { return filepath.Dir(o.path) }
+func (o *O) Name() string          { return filepath.Base(o.path) }
 func (o *O) Selected() bool        { return false }
 func (o *O) Select()               {}
 func (o *O) Unselect()             {}

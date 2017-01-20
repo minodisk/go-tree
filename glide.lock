@@ -1,8 +1,9 @@
-hash: a6e5a945100d4069ac3ea0feb7de4a2fc0f10a3318e9b7877b25514dfbfa7ede
-updated: 2017-01-19T12:44:13.916316883+09:00
+hash: 30df965d5f38052a5c973ec9150e7bb86fc264f1dfd81eac0c8c93b2824f60c8
+updated: 2017-01-20T11:13:23.852229237+09:00
 imports:
+- name: github.com/mattn/natural
+  version: 6b2ca5c8eb9a3bbc5a04c30324d87879a92067e9
 - name: github.com/skratchdot/open-golang
   version: 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
-testImports:
-- name: github.com/minodisk/go-tree
-  version: 50ec4da965ca8889673a8febbc387f9c3670221c
+  subpackages:
+  - open

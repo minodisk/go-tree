@@ -18,28 +18,28 @@ func linesToString(lines [][]byte) string {
 
 func TestNewDir(t *testing.T) {
 	{
-		_, err := tree.NewDir("/home/minodisk/Workspace/go/src/github.com/minodisk/nvim-finder", tree.ConfigDefault)
+		_, err := tree.NewDir("/home/minodisk/Workspace/go/src/github.com/minodisk/nvim-finder", ConfigShorter)
 		if err != nil {
 			t.Errorf("success with nvim-finder directory")
 		}
 	}
 
 	{
-		_, err := tree.NewDir("./fixtures/wrong/path", tree.ConfigDefault)
+		_, err := tree.NewDir("./fixtures/wrong/path", ConfigShorter)
 		if err == nil {
 			t.Errorf("should return error with a wrong path")
 		}
 	}
 
 	{
-		_, err := tree.NewDir("./fixtures/foo/a.txt", tree.ConfigDefault)
+		_, err := tree.NewDir("./fixtures/foo/a.txt", ConfigShorter)
 		if err == nil {
 			t.Errorf("should return error with a file path")
 		}
 	}
 
 	{
-		d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+		d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 		if err != nil {
 			t.Fatalf("fail to create dir with error: %s", err)
 		}
@@ -52,7 +52,7 @@ func TestNewDir(t *testing.T) {
 }
 
 func TestType(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestType(t *testing.T) {
 }
 
 func TestOpenRec(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,8 +82,38 @@ func TestOpenRec(t *testing.T) {
 	}
 }
 
+func TestSort(t *testing.T) {
+	d, err := tree.NewDir("./fixtures/sort", ConfigShorter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := d.Open(); err != nil {
+		t.Fatal(err)
+	}
+	a := linesToString(d.Lines(0))
+	e := `- sort/
+ + 1/
+ + 2/
+ + 10/
+ + a-1/
+ + a-2/
+ + a-10/
+ | 1.txt
+ | 2.txt
+ | 10.txt
+ | A-1.txt
+ | A-2.txt
+ | A-10.txt
+ | a-1.txt
+ | a-2.txt
+ | a-10.txt`
+	if a != e {
+		t.Errorf("Objects should be sorted with natural sort\nexpected:\n%s\nactual:\n%s", e, a)
+	}
+}
+
 func TestOpened(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +133,7 @@ func TestOpened(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +152,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +168,7 @@ func TestClose(t *testing.T) {
 }
 
 func TestToggle(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +206,7 @@ func TestToggle(t *testing.T) {
 }
 
 func TestNumChildren(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,11 +221,11 @@ func TestNumChildren(t *testing.T) {
 }
 
 func TestAppendChild(t *testing.T) {
-	p, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	p, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err := tree.NewDir("./fixtures/foo/bar", tree.ConfigDefault)
+	c, err := tree.NewDir("./fixtures/foo/bar", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +245,7 @@ func TestAppendChild(t *testing.T) {
 }
 
 func TestIndexOf(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", tree.ConfigDefault)
+	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {
 		t.Fatal(err)
 	}

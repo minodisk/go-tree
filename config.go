@@ -37,3 +37,22 @@ func NewConfig(indent, prefixDirOpened, prefixDirClosed, prefixFile, prefixSelec
 	}
 	return c
 }
+
+func (c Config) FillWithDefault() Config {
+	if c.Indent == "" {
+		c.Indent = ConfigDefault.Indent
+	}
+	if c.PrefixDirOpened == "" {
+		c.PrefixDirOpened = ConfigDefault.PrefixDirOpened
+	}
+	if c.PrefixDirClosed == "" {
+		c.PrefixDirClosed = ConfigDefault.PrefixDirClosed
+	}
+	if c.PrefixFile == "" {
+		c.PrefixFile = ConfigDefault.PrefixFile
+	}
+	if c.PrefixSelected == "" {
+		c.PrefixSelected = ConfigDefault.PrefixSelected
+	}
+	return c
+}

@@ -1,5 +1,4 @@
 package: github.com/minodisk/nvim-finder/rplugin/finder/vendor/github.com/minodisk/go-tree
 import:
 - package: github.com/skratchdot/open-golang
-testImport:
-- package: github.com/minodisk/go-tree
+- package: github.com/mattn/natural

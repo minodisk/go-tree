@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mattn/natural"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -145,7 +146,7 @@ func (os Operators) Less(i, j int) bool {
 	if !aIsDir && bIsDir {
 		return false
 	}
-	return a.Name() < b.Name()
+	return natural.NaturalComp(a.Name(), b.Name()) < 0
 }
 
 func (os Operators) Select() {
