@@ -37,16 +37,12 @@ func NewDir(path string, config Config) (*Dir, error) {
 	return d, err
 }
 
-func (d *Dir) Type() string {
-	return "directory"
+func (d *Dir) Parent() *Dir {
+	return d.parent
 }
 
 func (d *Dir) SetParent(p *Dir) {
 	d.parent = p
-}
-
-func (d *Dir) Parent() *Dir {
-	return d.parent
 }
 
 func (d *Dir) Dirname() string {
@@ -73,22 +69,7 @@ func (d *Dir) ToggleSelected() {
 	d.selected = !d.selected
 }
 
-func (d *Dir) Move(newDirname string) error {
-	return os.Rename(d.Path(), filepath.Join(newDirname, d.Name()))
-}
-
-func (d *Dir) Remove() error {
-	return os.RemoveAll(d.Path())
-}
-
 // Non interface methods
-
-func (d *Dir) Equals(t *Dir) bool {
-	if t == nil {
-		return false
-	}
-	return d.Path() == t.Path()
-}
 
 func (d *Dir) Scan() error {
 	if !d.opened {

@@ -9,25 +9,32 @@ import (
 )
 
 type Operator interface {
-	SetParent(*Dir)
-	Parent() *Dir
+	// Properties
 	IsDir() bool
-	Type() string
 	Name() string
 	Dirname() string
 	Path() string
-
+	Parent() *Dir
+	SetParent(*Dir)
 	Selected() bool
 	Select()
 	Unselect()
 	ToggleSelected()
+}
 
-	Move(string) error
-	Remove() error
+func Type(o Operator) string {
+	switch o.(type) {
+	case *Dir:
+		return "directory"
+	case *File:
+		return "file"
+	default:
+		return "undefined"
+	}
 }
 
 func Equals(a, b Operator) bool {
-	if a.Type() != b.Type() {
+	if a.IsDir() != b.IsDir() {
 		return false
 	}
 	return a.Path() == b.Path()
@@ -120,6 +127,14 @@ func CreateFile(o Operator, names ...string) error {
 
 func Rename(o Operator, newName string) error {
 	return os.Rename(o.Path(), filepath.Join(o.Dirname(), newName))
+}
+
+func Move(o Operator, newDirname string) error {
+	return os.Rename(o.Path(), filepath.Join(newDirname, o.Name()))
+}
+
+func Remove(o Operator) error {
+	return os.RemoveAll(o.Path())
 }
 
 func OpenWithOS(o Operator) error {

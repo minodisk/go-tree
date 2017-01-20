@@ -42,7 +42,7 @@ func (os Operators) FindDir(d *Dir) *Dir {
 		if !ok {
 			continue
 		}
-		if t.Equals(d) {
+		if Equals(t, d) {
 			return t
 		}
 	}
@@ -55,7 +55,7 @@ func (os Operators) FindFile(f *File) *File {
 		if !ok {
 			continue
 		}
-		if t.Equals(f) {
+		if Equals(t, f) {
 			return t
 		}
 	}

@@ -51,16 +51,6 @@ func TestNewDir(t *testing.T) {
 	}
 }
 
-func TestType(t *testing.T) {
-	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if d.Type() != "directory" {
-		t.Errorf("Type() should return directory")
-	}
-}
-
 func TestOpenRec(t *testing.T) {
 	d, err := tree.NewDir("./fixtures/foo", ConfigShorter)
 	if err != nil {

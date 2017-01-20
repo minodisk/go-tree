@@ -262,7 +262,7 @@ func (t *Tree) Move(cursor CursorFunc, text OperatorsTextFunc, cancel CancelFunc
 			return cancel()
 		}
 		for _, o := range os {
-			if err := o.Move(filepath.Join(t.root.Path(), path)); err != nil {
+			if err := Move(o, filepath.Join(t.root.Path(), path)); err != nil {
 				return err
 			}
 		}
@@ -277,7 +277,7 @@ func (t *Tree) Move(cursor CursorFunc, text OperatorsTextFunc, cancel CancelFunc
 	if err != nil {
 		return err
 	}
-	return o.Move(filepath.Join(t.root.Path(), path))
+	return Move(o, filepath.Join(t.root.Path(), path))
 }
 
 func (t *Tree) Remove(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc, render RenderFunc) error {
@@ -294,7 +294,7 @@ func (t *Tree) Remove(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc,
 			return cancel()
 		}
 		for _, o := range os {
-			if err := o.Remove(); err != nil {
+			if err := Remove(o); err != nil {
 				return err
 			}
 		}
@@ -312,7 +312,7 @@ func (t *Tree) Remove(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc,
 	if !ok {
 		return cancel()
 	}
-	return o.Remove()
+	return Remove(o)
 }
 
 func (t *Tree) OpenExternally(cursor CursorFunc, render RenderFunc) error {
