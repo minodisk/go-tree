@@ -47,7 +47,7 @@ func Rel(base, target Operator) (string, error) {
 }
 
 // UnderOrEquals returns that the path of target object is under or equals to the path of base directory.
-func UnderOrEquals(base *Dir, target Operator) (bool, error) {
+func UnderOrEquals(base, target Operator) (bool, error) {
 	rel, err := Rel(base, target)
 	if err != nil {
 		return false, err
@@ -63,10 +63,10 @@ func UnderOrEquals(base *Dir, target Operator) (bool, error) {
 	}
 }
 
-// GetDir returns nearest directory.
+// NearestDir returns the nearest directory.
 // When o is *Dir, returns itself.
 // In other cases, returns the parent of o.
-func GetDir(o Operator) *Dir {
+func NearestDir(o Operator) *Dir {
 	switch t := o.(type) {
 	case *Dir:
 		return t
@@ -75,12 +75,12 @@ func GetDir(o Operator) *Dir {
 	}
 }
 
-// GetDirWithOpened return nearest directory.
+// NearestOpenedDir return the nearest opened directory.
 // The difference from GetDir appears in case that o is *Dir.
 // When the *Dir is opened, returns itself.
 // When the *Dir is closed, returns the parent of the *Dir.
 // In other cases, returns the parent of o.
-func GetDirWithOpened(o Operator) (*Dir, error) {
+func NearestOpenedDir(o Operator) (*Dir, error) {
 	switch o := o.(type) {
 	case *Dir:
 		if o.opened {

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+
+	shutil "github.com/termie/go-shutil"
 )
 
 type CursorFunc func() (int, error)
@@ -11,20 +13,24 @@ type SetCursorFunc func(int) error
 type ConfirmFunc func(...Operator) (bool, error)
 type TextFunc func() (string, error)
 type TextsFunc func() ([]string, error)
+type OperatorFunc func(Operator) error
+type OperatorsFunc func(Operators) error
 type OperatorTextFunc func(Operator) (string, error)
-type OperatorsTextFunc func(...Operator) (string, error)
-type OperatorsTextsFunc func(...Operator) ([]string, error)
+type OperatorsTextFunc func(Operators) (string, error)
+type OperatorsTextsFunc func(Operators) ([]string, error)
 type OpenFileFunc func(*File) error
 type CancelFunc func() error
 type RenderFunc func([][]byte) error
+type SetClipboardFunc func(string) error
 
 type Tree struct {
-	root   *Dir
-	config Config
+	root    *Dir
+	context *Context
 }
 
-func New(path string, config Config) (*Tree, error) {
-	t := &Tree{config: config}
+func New(path string, context *Context) (*Tree, error) {
+	context.Config = context.Config.FillWithDefault()
+	t := &Tree{context: context}
 	if err := t.SetRootPath(path); err != nil {
 		return nil, err
 	}
@@ -32,7 +38,7 @@ func New(path string, config Config) (*Tree, error) {
 }
 
 func (t *Tree) SetRootPath(path string) error {
-	root, err := NewDir(path, t.config)
+	root, err := NewDir(path, t.context.Config)
 	if err != nil {
 		return err
 	}
@@ -54,6 +60,16 @@ func (t *Tree) Operator(cursor CursorFunc) (Operator, error) {
 		//
 	}
 	return o, nil
+}
+
+type SelectedRangeFunc func() (Range, error)
+
+func (t *Tree) Operators(selectedRange SelectedRangeFunc) (Operators, error) {
+	r, err := selectedRange()
+	if err != nil {
+		return nil, err
+	}
+	return t.root.ObjectsAt(r), nil
 }
 
 func (t *Tree) IndexOf(i int) (Operator, bool) {
@@ -95,7 +111,7 @@ func (t *Tree) Up(cursor CursorFunc, render RenderFunc) error {
 		return err
 	}
 
-	current, err := GetDirWithOpened(o)
+	current, err := NearestOpenedDir(o)
 	if err != nil {
 		return err
 	}
@@ -157,12 +173,14 @@ func (t *Tree) Select(cursor CursorFunc, setCursorFunc SetCursorFunc, render Ren
 	return nil
 }
 
-func (t *Tree) SelectAll(render RenderFunc) error {
-	if t.HasSelected() {
-		t.root.Selecteds().Unselect()
-		return t.Render(render)
+func (t *Tree) ReverseSelected(render RenderFunc) error {
+	for _, o := range t.root.All() {
+		if o.Selected() {
+			o.Unselect()
+		} else {
+			o.Select()
+		}
 	}
-	t.root.All().Select()
 	return t.Render(render)
 }
 
@@ -220,7 +238,7 @@ func (t *Tree) Rename(cursor CursorFunc, text OperatorTextFunc, texts OperatorsT
 	if t.HasSelected() {
 		os := t.root.Selecteds()
 		defer os.Unselect()
-		names, err := texts(os...)
+		names, err := texts(os)
 		if err != nil {
 			return err
 		}
@@ -254,7 +272,7 @@ func (t *Tree) Move(cursor CursorFunc, text OperatorsTextFunc, cancel CancelFunc
 	if t.HasSelected() {
 		os := t.root.Selecteds()
 		defer os.Unselect()
-		path, err := text(os...)
+		path, err := text(os)
 		if err != nil {
 			return err
 		}
@@ -273,7 +291,7 @@ func (t *Tree) Move(cursor CursorFunc, text OperatorsTextFunc, cancel CancelFunc
 	if err != nil {
 		return err
 	}
-	path, err := text(o)
+	path, err := text(Operators{o})
 	if err != nil {
 		return err
 	}
@@ -343,7 +361,7 @@ func (t *Tree) OpenDirExternally(cursor CursorFunc, render RenderFunc) error {
 		os := t.root.Selecteds()
 		defer os.Unselect()
 		for _, o := range os {
-			if err := OpenWithOS(GetDir(o)); err != nil {
+			if err := OpenWithOS(NearestDir(o)); err != nil {
 				return err
 			}
 		}
@@ -354,5 +372,62 @@ func (t *Tree) OpenDirExternally(cursor CursorFunc, render RenderFunc) error {
 	if err != nil {
 		return err
 	}
-	return OpenWithOS(GetDir(o))
+	return OpenWithOS(NearestDir(o))
+}
+
+func (t *Tree) Copy(cursor CursorFunc) error {
+	if t.HasSelected() {
+		os := t.root.Selecteds()
+		defer os.Unselect()
+		t.context.Registry = os
+		return nil
+	}
+
+	o, err := t.Operator(cursor)
+	if err != nil {
+		return err
+	}
+	t.context.Registry = Operators{o}
+	return nil
+}
+
+func (t *Tree) CopiedList(operators OperatorsFunc) error {
+	return operators(t.context.Registry)
+}
+
+func (t *Tree) Paste(cursor CursorFunc, render RenderFunc) error {
+	defer t.ScanAndRender(render)
+
+	if t.context.Registry.Len() == 0 {
+		return nil
+	}
+	o, err := t.Operator(cursor)
+	if err != nil {
+		return err
+	}
+	d, err := NearestOpenedDir(o)
+	if err != nil {
+		return err
+	}
+	dst := d.Path()
+	for _, o := range t.context.Registry {
+		if o.IsDir() {
+			if err := shutil.CopyTree(o.Path(), dst, nil); err != nil {
+				return err
+			}
+		} else {
+			if err := shutil.CopyFile(o.Path(), filepath.Join(dst, o.Name()), true); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (t *Tree) Yank(cursor CursorFunc, setClipboard SetClipboardFunc) error {
+	o, err := t.Operator(cursor)
+	if err != nil {
+		return err
+	}
+	return setClipboard(o.Path())
 }

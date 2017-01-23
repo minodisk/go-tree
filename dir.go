@@ -165,32 +165,77 @@ func (d *Dir) AppendChild(o Operator) {
 	o.SetParent(d)
 }
 
+type Range struct {
+	Start, End int
+}
+
+type ContextOperators struct {
+	Operators Operators
+	Caret     int
+}
+
+func (d *Dir) ObjectsAt(r Range) Operators {
+	ctx := ContextOperators{
+		Operators: Operators{},
+		Caret:     0,
+	}
+	d.objectsAt(r, &ctx)
+	return ctx.Operators
+}
+
+func (d *Dir) objectsAt(r Range, ctx *ContextOperators) bool {
+	if ctx.Caret > r.End {
+		return false
+	}
+	if r.Start <= ctx.Caret && ctx.Caret <= r.End {
+		ctx.Operators = append(ctx.Operators, d)
+	}
+
+	for _, o := range d.children {
+		ctx.Caret++
+		if ctx.Caret > r.End {
+			return false
+		}
+
+		if o, ok := o.(*Dir); ok {
+			if !o.objectsAt(r, ctx) {
+				return false
+			}
+		} else {
+			if r.Start <= ctx.Caret && ctx.Caret <= r.End {
+				ctx.Operators = append(ctx.Operators, d)
+			}
+		}
+	}
+	return true
+}
+
 func (d *Dir) IndexOf(i int) (Operator, bool) {
-	o, _, ok := d.indexOf(i)
+	o, ok, _ := d.indexOf(i)
 	return o, ok
 }
 
-func (d *Dir) indexOf(i int) (Operator, int, bool) {
+func (d *Dir) indexOf(i int) (Operator, bool, int) {
 	if i == 0 {
-		return d, i, true
+		return d, true, i
 	}
 	for _, o := range d.children {
 		i--
 		if i == 0 {
-			return o, i, true
+			return o, true, i
 		}
 		if t, ok := o.(*Dir); ok {
 			var (
 				operator Operator
 				found    bool
 			)
-			operator, i, found = t.indexOf(i)
+			operator, found, i = t.indexOf(i)
 			if found {
-				return operator, i, found
+				return operator, found, i
 			}
 		}
 	}
-	return nil, i, false
+	return nil, false, i
 }
 
 func (d *Dir) ReadParent() (*Dir, error) {

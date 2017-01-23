@@ -10,6 +10,11 @@ var (
 	}
 )
 
+type Context struct {
+	Config   Config
+	Registry Operators
+}
+
 type Config struct {
 	Indent          string
 	PrefixDirOpened string
