@@ -1,5 +1,5 @@
-hash: 30df965d5f38052a5c973ec9150e7bb86fc264f1dfd81eac0c8c93b2824f60c8
-updated: 2017-01-20T11:13:23.852229237+09:00
+hash: 6ed17109e02d5cacb4e2619b57347c2f9e62b7007a3a6011edc06d1fd93125f1
+updated: 2017-01-20T19:19:33.024758506+09:00
 imports:
 - name: github.com/mattn/natural
   version: 6b2ca5c8eb9a3bbc5a04c30324d87879a92067e9
@@ -7,3 +7,8 @@ imports:
   version: 75fb7ed4208cf72d323d7d02fd1a5964a7a9073c
   subpackages:
   - open
+- name: github.com/termie/go-shutil
+  version: bcacb06fecaeec8dc42af03c87c6949f4a05c74c
+testImports:
+- name: github.com/minodisk/go-tree
+  version: 7721b9292e816749628571cb307cc79deb98c1ad

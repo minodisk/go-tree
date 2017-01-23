@@ -2,3 +2,4 @@ package: github.com/minodisk/nvim-finder/rplugin/finder/vendor/github.com/minodi
 import:
 - package: github.com/skratchdot/open-golang
 - package: github.com/mattn/natural
+- package: github.com/termie/go-shutil
