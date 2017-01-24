@@ -8,18 +8,19 @@ import (
 )
 
 type File struct {
+	context *Context
+
 	os.FileInfo
-	config  Config
 	dirname string
 	parent  *Dir
 
 	selected bool
 }
 
-func NewFile(path string, config Config) (*File, error) {
+func NewFile(path string, context *Context) (*File, error) {
 	var err error
 	f := &File{
-		config:  config,
+		context: context,
 		dirname: filepath.Dir(path),
 	}
 	f.FileInfo, err = os.Stat(path)
@@ -30,6 +31,10 @@ func NewFile(path string, config Config) (*File, error) {
 		return nil, fmt.Errorf("the path '%s' isn't file", path)
 	}
 	return f, err
+}
+
+func (f *File) Context() *Context {
+	return f.context
 }
 
 func (f *File) Parent() *Dir {
@@ -67,11 +72,18 @@ func (f *File) ToggleSelected() {
 // Non interface methods
 
 func (f *File) line(depth int) []byte {
-	var prefix string
-	if f.selected {
-		prefix = f.config.PrefixSelected
-	} else {
-		prefix = f.config.PrefixFile
+	var indent, delimiter, prefix, space string
+	if depth > 0 {
+		indent = strings.Repeat(f.context.Config.Indent, depth-1)
+		if depth != 1 {
+			delimiter = f.context.Config.Delimiter
+		}
+		if f.selected {
+			prefix = f.context.Config.PrefixSelected
+		} else {
+			prefix = f.context.Config.PrefixFile
+		}
+		space = " "
 	}
-	return []byte(fmt.Sprintf("%s%s %s", strings.Repeat(f.config.Indent, depth), prefix, f.Name()))
+	return []byte(fmt.Sprintf("%s%s%s%s%s", indent, delimiter, prefix, space, OriginalPath(f)))
 }

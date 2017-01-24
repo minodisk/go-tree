@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ConfigShorter = tree.Config{Indent: " "}.FillWithDefault()
+	ConfigShorter = tree.ConfigDefault
 )
 
 type O struct {

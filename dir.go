@@ -11,8 +11,9 @@ import (
 )
 
 type Dir struct {
+	context *Context
+
 	os.FileInfo
-	config  Config
 	dirname string
 	parent  *Dir
 
@@ -21,10 +22,10 @@ type Dir struct {
 	children Operators
 }
 
-func NewDir(path string, config Config) (*Dir, error) {
+func NewDir(path string, context *Context) (*Dir, error) {
 	var err error
 	d := &Dir{
-		config:  config,
+		context: context,
 		dirname: filepath.Dir(path),
 	}
 	d.FileInfo, err = os.Stat(path)
@@ -35,6 +36,10 @@ func NewDir(path string, config Config) (*Dir, error) {
 		return nil, fmt.Errorf("the path '%s' isn't directory", path)
 	}
 	return d, err
+}
+
+func (d *Dir) Context() *Context {
+	return d.context
 }
 
 func (d *Dir) Parent() *Dir {
@@ -87,7 +92,7 @@ func (d *Dir) Scan() error {
 	for _, info := range infos {
 		var o Operator
 		if info.IsDir() {
-			newDir := &Dir{FileInfo: info, config: d.config, dirname: dirname}
+			newDir := &Dir{FileInfo: info, context: d.context, dirname: dirname}
 			oldDir := olds.FindDir(newDir)
 			if oldDir != nil {
 				oldDir.Scan()
@@ -96,7 +101,7 @@ func (d *Dir) Scan() error {
 				o = newDir
 			}
 		} else {
-			newFile := &File{FileInfo: info, config: d.config, dirname: dirname}
+			newFile := &File{FileInfo: info, context: d.context, dirname: dirname}
 			oldFile := olds.FindFile(newFile)
 			if oldFile != nil {
 				o = oldFile
@@ -245,7 +250,7 @@ func (d *Dir) ReadParent() (*Dir, error) {
 	if filepath.ToSlash(d.Path()) == "/" {
 		return nil, errors.New("can't read parent")
 	}
-	p, err := NewDir(d.dirname, d.config)
+	p, err := NewDir(d.dirname, d.context)
 	if err != nil {
 		return nil, err
 	}
@@ -304,9 +309,14 @@ func (d *Dir) Selecteds() Operators {
 }
 
 func (d *Dir) Lines(depth int) [][]byte {
-	lines := [][]byte{
-		d.line(depth),
-	}
+	lines := [][]byte{}
+
+	// if depth == 0 {
+	// 	lines = append(lines, []byte(".."))
+	// } else {
+	b := d.line(depth)
+	lines = append(lines, b)
+	// }
 	depth++
 
 	for _, o := range d.children {
@@ -321,15 +331,26 @@ func (d *Dir) Lines(depth int) [][]byte {
 }
 
 func (d *Dir) line(depth int) []byte {
-	var prefix string
-	if d.selected {
-		prefix = d.config.PrefixSelected
-	} else if d.opened {
-		prefix = d.config.PrefixDirOpened
-	} else {
-		prefix = d.config.PrefixDirClosed
+	var indent, delimiter, prefix, space, name, slash string
+	if depth > 0 {
+		indent = strings.Repeat(d.context.Config.Indent, depth-1)
+		if depth != 1 {
+			delimiter = d.context.Config.Delimiter
+		}
+		if d.selected {
+			prefix = d.context.Config.PrefixSelected
+		} else if d.opened {
+			prefix = d.context.Config.PrefixDirOpened
+		} else {
+			prefix = d.context.Config.PrefixDirClosed
+		}
+		space = " "
 	}
-	return []byte(fmt.Sprintf("%s%s %s/", strings.Repeat(d.config.Indent, depth), prefix, d.Name()))
+	name = OriginalPath(d)
+	if name != "/" {
+		slash = "/"
+	}
+	return []byte(fmt.Sprintf("%s%s%s%s%s%s", indent, delimiter, prefix, space, name, slash))
 }
 
 func (d *Dir) CreateDir(name ...string) error {

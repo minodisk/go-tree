@@ -3,6 +3,7 @@ package tree
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	shutil "github.com/termie/go-shutil"
@@ -29,7 +30,13 @@ type Tree struct {
 }
 
 func New(path string, context *Context) (*Tree, error) {
-	context.Config = context.Config.FillWithDefault()
+	if err := context.Init(); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(context.Config.TrashDirname, 0775); err != nil {
+		return nil, err
+	}
+
 	t := &Tree{context: context}
 	if err := t.SetRootPath(path); err != nil {
 		return nil, err
@@ -38,7 +45,7 @@ func New(path string, context *Context) (*Tree, error) {
 }
 
 func (t *Tree) SetRootPath(path string) error {
-	root, err := NewDir(path, t.context.Config)
+	root, err := NewDir(path, t.context)
 	if err != nil {
 		return err
 	}
@@ -97,6 +104,35 @@ func (t *Tree) Open(render RenderFunc) error {
 func (t *Tree) CD(path TextFunc, render RenderFunc) error {
 	defer t.Render(render)
 	p, err := path()
+	if err != nil {
+		return err
+	}
+	return t.SetRootPath(p)
+}
+
+func (t *Tree) Root(render RenderFunc) error {
+	defer t.Render(render)
+	return t.SetRootPath(DirRoot())
+}
+
+func (t *Tree) Home(render RenderFunc) error {
+	defer t.Render(render)
+	dir, err := DirHome()
+	if err != nil {
+		return err
+	}
+	return t.SetRootPath(dir)
+}
+
+func (t *Tree) Trash(render RenderFunc) error {
+	defer t.Render(render)
+	return t.SetRootPath(t.context.Config.TrashDirname)
+}
+
+func (t *Tree) Project(render RenderFunc) error {
+	defer t.Render(render)
+
+	p, err := DirProject(t.root.Path(), t.context.Config.rProject)
 	if err != nil {
 		return err
 	}
@@ -331,6 +367,76 @@ func (t *Tree) Remove(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc,
 		return cancel()
 	}
 	return Remove(o)
+}
+
+func (t *Tree) RemovePermanently(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc, render RenderFunc) error {
+	defer t.ScanAndRender(render)
+
+	if t.HasSelected() {
+		os := t.root.Selecteds()
+		defer os.Unselect()
+		ok, err := confirm(os...)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return cancel()
+		}
+		for _, o := range os {
+			if err := RemovePermanently(o); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	o, err := t.Operator(cursor)
+	if err != nil {
+		return err
+	}
+	ok, err := confirm(o)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return cancel()
+	}
+	return RemovePermanently(o)
+}
+
+func (t *Tree) Restore(cursor CursorFunc, confirm ConfirmFunc, cancel CancelFunc, render RenderFunc) error {
+	defer t.ScanAndRender(render)
+
+	if t.HasSelected() {
+		os := t.root.Selecteds()
+		defer os.Unselect()
+		ok, err := confirm(os...)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return cancel()
+		}
+		for _, o := range os {
+			if err := Restore(o); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	o, err := t.Operator(cursor)
+	if err != nil {
+		return err
+	}
+	ok, err := confirm(o)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return cancel()
+	}
+	return Restore(o)
 }
 
 func (t *Tree) OpenExternally(cursor CursorFunc, render RenderFunc) error {

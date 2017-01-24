@@ -9,6 +9,7 @@ import (
 
 // A Operator represents objects in file system.
 type Operator interface {
+	Context() *Context
 	IsDir() bool
 	Name() string
 	Dirname() string
@@ -145,14 +146,51 @@ func Rename(o Operator, newName string) error {
 	return os.Rename(o.Path(), filepath.Join(o.Dirname(), newName))
 }
 
+func IsTrash(o Operator) bool {
+	return o.Dirname() == o.Context().Config.TrashDirname
+}
+
+func OriginalPath(o Operator) string {
+	if !IsTrash(o) {
+		return o.Name()
+	}
+	info, err := DecodeTrashInfo(o.Name())
+	if err != nil {
+		return o.Name()
+	}
+	return info.OriginalPath
+}
+
 // Move moves o to under the newDirname.
 func Move(o Operator, newDirname string) error {
 	return os.Rename(o.Path(), filepath.Join(newDirname, o.Name()))
 }
 
-// Remove removes o and any children it contains.
+// Remove move o and any children it contains to trash box.
 func Remove(o Operator) error {
+	if IsTrash(o) {
+		return nil
+	}
+	ti := NewTrashInfo(o.Path())
+	tn, err := ti.Encode()
+	if err != nil {
+		return err
+	}
+	tp := filepath.Join(o.Context().Config.TrashDirname, tn)
+	return os.Rename(o.Path(), tp)
+}
+
+// RemovePermanently removes o and any children it contains permanently.
+func RemovePermanently(o Operator) error {
 	return os.RemoveAll(o.Path())
+}
+
+// Restore move o to the original path from trash box.
+func Restore(o Operator) error {
+	if !IsTrash(o) {
+		return nil
+	}
+	return os.Rename(o.Path(), OriginalPath(o))
 }
 
 // OpenWithOS opens o with the default application related in OS.
