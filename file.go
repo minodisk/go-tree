@@ -72,18 +72,16 @@ func (f *File) ToggleSelected() {
 // Non interface methods
 
 func (f *File) line(depth int) []byte {
-	var indent, delimiter, prefix, space string
+	var indent, prefix, delimiter, name string
 	if depth > 0 {
 		indent = strings.Repeat(f.context.Config.Indent, depth-1)
-		if depth != 1 {
-			delimiter = f.context.Config.Delimiter
-		}
 		if f.selected {
 			prefix = f.context.Config.PrefixSelected
 		} else {
 			prefix = f.context.Config.PrefixFile
 		}
-		space = " "
+		delimiter = " "
 	}
-	return []byte(fmt.Sprintf("%s%s%s%s%s", indent, delimiter, prefix, space, OriginalPath(f)))
+	name = OriginalPath(f)
+	return []byte(indent + prefix + delimiter + name)
 }

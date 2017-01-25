@@ -7,29 +7,26 @@ import (
 	tree "github.com/minodisk/go-tree"
 )
 
-var (
-	ConfigShorter = tree.ConfigDefault
-)
-
 type O struct {
 	path string
 }
 
-func NewO(path string) *O          { return &O{path: path} }
-func (o *O) SetParent(d *tree.Dir) {}
-func (o *O) Parent() *tree.Dir     { return &tree.Dir{} }
-func (o *O) IsDir() bool           { return false }
-func (o *O) Type() string          { return "" }
-func (o *O) Path() string          { return o.path }
-func (o *O) Dirname() string       { return filepath.Dir(o.path) }
-func (o *O) Name() string          { return filepath.Base(o.path) }
-func (o *O) Selected() bool        { return false }
-func (o *O) Select()               {}
-func (o *O) Unselect()             {}
-func (o *O) ToggleSelected()       {}
-func (o *O) Rename(string) error   { return nil }
-func (o *O) Move(string) error     { return nil }
-func (o *O) Remove() error         { return nil }
+func NewO(path string) *O           { return &O{path: path} }
+func (o *O) Context() *tree.Context { return &tree.Context{} }
+func (o *O) SetParent(d *tree.Dir)  {}
+func (o *O) Parent() *tree.Dir      { return &tree.Dir{} }
+func (o *O) IsDir() bool            { return false }
+func (o *O) Type() string           { return "" }
+func (o *O) Path() string           { return o.path }
+func (o *O) Dirname() string        { return filepath.Dir(o.path) }
+func (o *O) Name() string           { return filepath.Base(o.path) }
+func (o *O) Selected() bool         { return false }
+func (o *O) Select()                {}
+func (o *O) Unselect()              {}
+func (o *O) ToggleSelected()        {}
+func (o *O) Rename(string) error    { return nil }
+func (o *O) Move(string) error      { return nil }
+func (o *O) Remove() error          { return nil }
 
 func TestRel(t *testing.T) {
 	type Case struct {

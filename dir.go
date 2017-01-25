@@ -331,12 +331,9 @@ func (d *Dir) Lines(depth int) [][]byte {
 }
 
 func (d *Dir) line(depth int) []byte {
-	var indent, delimiter, prefix, space, name, slash string
+	var indent, prefix, delimiter, name, postfix string
 	if depth > 0 {
 		indent = strings.Repeat(d.context.Config.Indent, depth-1)
-		if depth != 1 {
-			delimiter = d.context.Config.Delimiter
-		}
 		if d.selected {
 			prefix = d.context.Config.PrefixSelected
 		} else if d.opened {
@@ -344,13 +341,13 @@ func (d *Dir) line(depth int) []byte {
 		} else {
 			prefix = d.context.Config.PrefixDirClosed
 		}
-		space = " "
+		delimiter = " "
 	}
 	name = OriginalPath(d)
-	if name != "/" {
-		slash = "/"
+	if name != d.context.Config.PostfixDir {
+		postfix = d.context.Config.PostfixDir
 	}
-	return []byte(fmt.Sprintf("%s%s%s%s%s%s", indent, delimiter, prefix, space, name, slash))
+	return []byte(indent + prefix + delimiter + name + postfix)
 }
 
 func (d *Dir) CreateDir(name ...string) error {

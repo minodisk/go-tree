@@ -9,11 +9,11 @@ import (
 var (
 	ConfigDefault = &Config{
 		Indent:          " ",
-		Delimiter:       "|",
 		PrefixDirOpened: "-",
 		PrefixDirClosed: "+",
-		PrefixFile:      " ",
+		PrefixFile:      "|",
 		PrefixSelected:  "*",
+		PostfixDir:      "/",
 		RegexpProject:   `^(?:\.git)$`,
 	}
 )
@@ -46,11 +46,11 @@ func (c *Context) Init() error {
 
 type Config struct {
 	Indent          string
-	Delimiter       string
 	PrefixDirOpened string
 	PrefixDirClosed string
 	PrefixFile      string
 	PrefixSelected  string
+	PostfixDir      string
 	TrashDirname    string
 	RegexpProject   string
 
@@ -60,9 +60,6 @@ type Config struct {
 func (c *Config) FillWithDefault() {
 	if c.Indent == "" {
 		c.Indent = ConfigDefault.Indent
-	}
-	if c.Delimiter == "" {
-		c.Delimiter = ConfigDefault.Delimiter
 	}
 	if c.PrefixDirOpened == "" {
 		c.PrefixDirOpened = ConfigDefault.PrefixDirOpened
@@ -75,6 +72,9 @@ func (c *Config) FillWithDefault() {
 	}
 	if c.PrefixSelected == "" {
 		c.PrefixSelected = ConfigDefault.PrefixSelected
+	}
+	if c.PostfixDir == "" {
+		c.PostfixDir = ConfigDefault.PostfixDir
 	}
 	if c.TrashDirname == "" {
 		c.TrashDirname = ConfigDefault.TrashDirname
