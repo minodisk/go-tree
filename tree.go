@@ -501,7 +501,9 @@ func (t *Tree) CopiedList(operators OperatorsFunc) error {
 	return operators(t.context.Registry)
 }
 
-func (t *Tree) Paste(cursor CursorFunc, render RenderFunc) error {
+type ChooseFunc func([]string) (string, error)
+
+func (t *Tree) Paste(cursor CursorFunc, choose ChooseFunc, rename OperatorTextFunc, render RenderFunc) error {
 	defer t.ScanAndRender(render)
 
 	if t.context.Registry.Len() == 0 {
@@ -515,14 +517,45 @@ func (t *Tree) Paste(cursor CursorFunc, render RenderFunc) error {
 	if err != nil {
 		return err
 	}
-	dst := d.Path()
+	dstDir := d.Path()
 	for _, o := range t.context.Registry {
+		dstPath := filepath.Join(dstDir, o.Name())
+		if o.Path() == dstPath {
+			continue
+		}
+		if info, err := os.Stat(dstPath); err == nil {
+			cs := []string{"overwrite", "rename", "cancel"}
+			c, err := choose(cs)
+			if err != nil {
+				return err
+			}
+			switch c {
+			case "overwrite":
+				var dstOperator Operator
+				if info.IsDir() {
+					dstOperator, err = NewDir(dstPath, t.context)
+				} else {
+					dstOperator, err = NewFile(dstPath, t.context)
+				}
+				if err := Remove(dstOperator); err != nil {
+					return err
+				}
+			case "rename":
+				newName, err := rename(o)
+				if err != nil {
+					return err
+				}
+				dstPath = filepath.Join(dstDir, newName)
+			case "cancel":
+				continue
+			}
+		}
 		if o.IsDir() {
-			if err := shutil.CopyTree(o.Path(), dst, nil); err != nil {
+			if err := shutil.CopyTree(o.Path(), dstPath, nil); err != nil {
 				return err
 			}
 		} else {
-			if err := shutil.CopyFile(o.Path(), filepath.Join(dst, o.Name()), true); err != nil {
+			if err := shutil.CopyFile(o.Path(), dstPath, true); err != nil {
 				return err
 			}
 		}
