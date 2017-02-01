@@ -146,12 +146,12 @@ func Rename(o Operator, newName string) error {
 	return os.Rename(o.Path(), filepath.Join(o.Dirname(), newName))
 }
 
-func IsTrash(o Operator) bool {
+func IsInTrash(o Operator) bool {
 	return o.Dirname() == o.Context().Config.TrashDirname
 }
 
 func OriginalPath(o Operator) string {
-	if !IsTrash(o) {
+	if !IsInTrash(o) {
 		return o.Name()
 	}
 	info, err := DecodeTrashInfo(o.Name())
@@ -168,7 +168,7 @@ func Move(o Operator, newDirname string) error {
 
 // Remove move o and any children it contains to trash box.
 func Remove(o Operator) error {
-	if IsTrash(o) {
+	if IsInTrash(o) {
 		return nil
 	}
 	ti := NewTrashInfo(o.Path())
@@ -187,7 +187,7 @@ func RemovePermanently(o Operator) error {
 
 // Restore move o to the original path from trash box.
 func Restore(o Operator) error {
-	if !IsTrash(o) {
+	if !IsInTrash(o) {
 		return nil
 	}
 	return os.Rename(o.Path(), OriginalPath(o))
